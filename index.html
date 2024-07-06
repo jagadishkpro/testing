@@ -95,7 +95,7 @@ function initMap() {
             });
 
             map.setCenter(pos);
-			map.setZoom(10);
+			map.setZoom(14);
         }, () => {
             handleLocationError(true, map.getCenter());
         });
@@ -118,7 +118,7 @@ function initMap() {
                 userCoordinates = pos;
                 placeMarker(new google.maps.LatLng(pos.lat, pos.lng));
                 map.setCenter(pos);
-				map.setZoom(10);
+				map.setZoom(14);
             });
         }
     });
@@ -183,7 +183,7 @@ function updateCoordinates(id, coordinates) {
 		console.log('Body:', this.responseText);
 	  }
 	  if (this.status === 202 ) {
-            alert('Thank you, location updated');
+            console.log('Thank you, location updated');
         } else {
             console.log('Error updating coordinates');
         }
@@ -191,6 +191,7 @@ function updateCoordinates(id, coordinates) {
 
 	request.send(JSON.stringify(data)); 
 	
+	alert('Thank you, location updated');
 
 	
 	}else{
