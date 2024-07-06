@@ -3,8 +3,7 @@
 <head>
     <title>Geolocation</title>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-   <script src="https://static.parastorage.com/unpkg/wix-window@1.609.0/dist/wix-window.bundle.min.js"></script>
-
+   
     <style>
 		#map {
             height: 90%;
@@ -57,13 +56,9 @@
 	let map;
 let marker;
 let userCoordinates = {};
-var nearMeLocArr;
- window.onmessage = (event) => {
-    if (event.data) {
-       nearMeLocArr = event.data;
-      
-    }
-  };
+var nearMeLocArr; 
+
+
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: {lat: 31.944357630809794 , lng: 35.909803997628174},
@@ -76,12 +71,12 @@ function initMap() {
     locationButton.innerHTML = '<i class="fa-solid fa-location-crosshairs fa-xl"></i>';
     locationButton.classList.add("custom-map-control-button");
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(locationButton);
-	
-		if(nearMeLocArr){
-        
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
             const pos = {
-                lat: nearMeLocArr[0],
-                lng: nearMeLocArr[1]
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
             };
 
             userCoordinates = pos;
@@ -101,34 +96,36 @@ function initMap() {
 
             map.setCenter(pos);
 			map.setZoom(10);
-        }else{
+        }, () => {
             handleLocationError(true, map.getCenter());
-        }
-    
+        });
+    } else {
+        handleLocationError(false, map.getCenter());
+    }
 
     map.addListener('click', (event) => {
         placeMarker(event.latLng);
     });
 
     locationButton.addEventListener('click', () => {
-         if(nearMeLocArr){
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
                 const pos = {
-                    lat: nearMeLocArr[0],
-					lng: nearMeLocArr[1]
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
                 };
 
                 userCoordinates = pos;
                 placeMarker(new google.maps.LatLng(pos.lat, pos.lng));
                 map.setCenter(pos);
 				map.setZoom(10);
-           }
-        
+            });
+        }
     });
 
     document.getElementById('submit-button').addEventListener('click', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
-	    console.log(id)
         updateCoordinates(id, userCoordinates);
     });
 }
