@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Geolocation</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+   <script src="https://static.parastorage.com/unpkg/wix-window@1.609.0/dist/wix-window.bundle.min.js"></script>
+
+    <style>
+		#map {
+            height: 90%;
+            width: 100%;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+          #submit-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            width: 150px; /* Adjust the width as needed */
+            text-align: center;
+        }
+        #geolocation-button {
+            background: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+			width: 40px;
+			height: 40px;
+			margin-top: 5px;
+			margin-right: 10px;
+            
+        }
+		
+		@media only screen and (max-width: 768px) {
+			#submit-button {
+				width: 200px;
+			}
+		
+		}
+    </style>
+</head>
+<body>
+    
+    
+    <div id="map"></div>
+	<div id="submit-button">Submit</div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh0Kb5qOr-LMrp9xCVEOsLN7g-Joee-Ks&libraries=marker"></script>
+    <script>
+	let map;
+let marker;
+let userCoordinates = {};
+var nearMeLocArr;
+ window.onmessage = (event) => {
+    if (event.data) {
+       nearMeLocArr = event.data;
+      
+    }
+  };
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: 31.944357630809794 , lng: 35.909803997628174},
+        zoom: 10,
+		mapId: "925fa0737eb2bce9"
+    });
+
+	const locationButton = document.createElement("button");
+    locationButton.id = "geolocation-button";
+    locationButton.innerHTML = '<i class="fa-solid fa-location-crosshairs fa-xl"></i>';
+    locationButton.classList.add("custom-map-control-button");
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(locationButton);
+	
+		if(nearMeLocArr){
+        
+            const pos = {
+                lat: nearMeLocArr[0],
+                lng: nearMeLocArr[1]
+            };
+
+            userCoordinates = pos;
+
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                position: pos,
+                map: map,
+                gmpDraggable: true
+            });
+			
+			marker.addListener('dragend', function(event) {
+                userCoordinates = {
+                    lat: event.latLng.lat(),
+                    lng: event.latLng.lng()
+                };
+            });
+
+            map.setCenter(pos);
+			map.setZoom(10);
+        }else{
+            handleLocationError(true, map.getCenter());
+        }
+    
+
+    map.addListener('click', (event) => {
+        placeMarker(event.latLng);
+    });
+
+    locationButton.addEventListener('click', () => {
+         if(nearMeLocArr){
+                const pos = {
+                    lat: nearMeLocArr[0],
+					lng: nearMeLocArr[1]
+                };
+
+                userCoordinates = pos;
+                placeMarker(new google.maps.LatLng(pos.lat, pos.lng));
+                map.setCenter(pos);
+				map.setZoom(10);
+           }
+        
+    });
+
+    document.getElementById('submit-button').addEventListener('click', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        updateCoordinates(id, userCoordinates);
+    });
+}
+
+function placeMarker(location) {
+    if (marker) {
+        marker.position = location;
+    } else {
+        marker = new google.maps.marker.AdvancedMarkerElement({
+            position: location,
+            map: map,
+            gmpDraggable: true
+        });
+		
+		marker.addListener('dragend', function(event) {
+            userCoordinates = {
+                lat: event.latLng.lat(),
+                lng: event.latLng.lng()
+            };
+        });
+    }
+    userCoordinates = {
+        lat: location.lat(),
+        lng: location.lng()
+    };
+}
+
+function handleLocationError(browserHasGeolocation, pos) {
+    console.log(browserHasGeolocation
+        ? 'Error: The Geolocation service failed.'
+        : 'Error: Your browser doesn\'t support geolocation.');
+}
+
+function updateCoordinates(id, coordinates) {
+    
+	if(Object.keys(coordinates).length > 0){
+		var data = {
+			gps: `${coordinates.lat},${coordinates.lng}`
+			//'city': "Dubai"
+		};
+
+	 
+		
+		var request = new XMLHttpRequest();
+
+	request.open('PUT',  `https://crm.blink.jo/api/2.0/admin/crm/leads/${id}`);
+
+	request.setRequestHeader('Content-Type', 'application/json');
+	request.setRequestHeader('Authorization', 'Basic ODY3N2Q1N2EwMjI4NGYyMzc5OTVkMGQ1Nzg5NDcxOGQ6NGMyMmNlMzA1NDBiNDQ1YjZlNGQyMmJjYTg0ZjRjZjM=');
+
+	request.onreadystatechange = function () {
+	  if (this.readyState === 4) {
+		console.log('Status:', this.status);
+		console.log('Headers:', this.getAllResponseHeaders());
+		console.log('Body:', this.responseText);
+	  }
+	  if (this.status === 202 ) {
+            alert('Thank you, location updated');
+        } else {
+            console.log('Error updating coordinates');
+        }
+	};
+
+	request.send(JSON.stringify(data)); 
+	
+
+	
+	}else{
+	
+		console.log("Coordinates are not found")
+	}
+    
+}
+
+// Initialize the map
+initMap();
+
+	
+	</script>
+</body>
+</html>
