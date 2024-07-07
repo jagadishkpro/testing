@@ -100,7 +100,7 @@ function initMap() {
         }, () => {
             handleLocationError(true, map.getCenter());
         },
-		{maximumAge:10000, enableHighAccuracy: true});
+		{maximumAge:2000, enableHighAccuracy: true});
     } else {
         handleLocationError(false, map.getCenter());
     }
