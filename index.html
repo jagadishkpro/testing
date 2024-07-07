@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta name="viewport" content="width=device-width"> 
     <title>Geolocation</title>
-	<meta name="viewport" content="width=device-width">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
    
     <style>
@@ -96,10 +96,11 @@ function initMap() {
             });
 
             map.setCenter(pos);
-			map.setZoom(14);
+			map.setZoom(16);
         }, () => {
             handleLocationError(true, map.getCenter());
-        });
+        },
+		{maximumAge:10000, enableHighAccuracy: true});
     } else {
         handleLocationError(false, map.getCenter());
     }
@@ -119,7 +120,7 @@ function initMap() {
                 userCoordinates = pos;
                 placeMarker(new google.maps.LatLng(pos.lat, pos.lng));
                 map.setCenter(pos);
-				map.setZoom(14);
+				map.setZoom(16);
             });
         }
     });
