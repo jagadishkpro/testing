@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width"> 
+    <title>Geolocation</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.js" integrity="sha512-zbCSvezmUbiVidNvMav+PRxM3r51/wQOLuWQnLHHNg2FsbwU4W6fEs0kFYxJOiFEqqE14I6KguU4mrqFIaagyA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	
+    <style>
+		#map {
+            height: 80%;
+            width: 100%;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+			font-family: Arial, sans-serif;
+        }
+          #submit-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #4285F4;
+			background-color: #ff5e57;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            width: 150px; /* Adjust the width as needed */
+            text-align: center;
+        }
+        #geolocation-button {
+            background: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+			width: 40px;
+			height: 40px;
+			margin-top: 5px;
+			margin-right: 10px;
+            
+        }
+		.topdiv{
+			background-color: #000;
+			text-align: center;
+			margin-bottom: -10px;
+		}
+		
+		.topdiv img {
+            width: 30%;
+			margin-top: 20px;
+        }
+		
+		.topdiv h1 {
+                font-size: 16px;
+				color: #fff;
+			
+			padding-bottom: 10px;
+            }
+		
+		@media only screen and (max-width: 768px) {
+			#submit-button {
+				width: 30%;
+			}
+		
+		}
+    </style>
+</head>
+<body>
+    <div class="topdiv">
+    <img src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/neobyblink-jsejsj/assets/kzqloxxhev5g/neo_red_and_white.png" alt="Neo by Blink">
+    <h1>Check Coverage Tool</h1>
+	</div>
+    
+    <div id="map"></div>
+	<div id="submit-button">Next</div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBvV0XIVB50c0jUdvXu0d3QUheaFCEwzHo&libraries=marker"></script>
+    <script>
+	let map;
+let marker;
+let userCoordinates = {};
+var nearMeLocArr; 
+ let geoJsonLayer;
+
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: 31.944357630809794 , lng: 35.909803997628174},
+        zoom: 10,
+		mapId: "925fa0737eb2bce9"
+    });
+
+	const locationButton = document.createElement("button");
+    locationButton.id = "geolocation-button";
+    locationButton.innerHTML = '<i class="fa-solid fa-location-crosshairs fa-xl"></i>';
+    locationButton.classList.add("custom-map-control-button");
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(locationButton);
+	
+	const nextbtn = document.getElementById("submit-button")
+	map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(nextbtn);
+	
+/*	const kmzLayer = new google.maps.KmlLayer({
+        url: 'https://jagadishkpro.github.io/testing/testpolygons.kmz', 
+        map: map,
+        suppressInfoWindows: true, 
+        preserveViewport: true
+    });
+	
+	kmzLayer.addListener('click', function(event) {
+          var content = event.featureData.infoWindowHtml;
+          alert(content)
+        }); */
+		
+	$.ajax('https://jagadishkpro.github.io/testing/app.kml').done(function (xml) {
+            const geojson = toGeoJSON.kml(xml);
+			console.log(geojson)
+			map.data.addGeoJson(geojson);
+            map.data.setStyle({
+			  fillColor: 0,
+			  fillOpacity: 0,
+			  strokeWeight: 1
+			});
+            
+	});
+    // Store the polygons loaded from the KMZ layer
+    let polygons = [];
+
+   /* kmzLayer.addListener('defaultviewport_changed', function() {
+        kmzLayer.getKmlFeatures().then((kmlFeatures) => {
+            polygons = kmlFeatures.filter(feature => feature.getGeometry().getType() === 'Polygon').map(feature => {
+                const paths = feature.getGeometry().getArray()[0].getArray().map(latLng => ({
+                    lat: latLng.lat(),
+                    lng: latLng.lng()
+                }));
+                return {
+                    polygon: new google.maps.Polygon({
+                        paths: paths,
+                        map: map,
+                        visible: false // Ensure polygons are not visible
+                    }),
+                    name: feature.getProperty('name') // Assuming the KMZ has 'name' property
+                };
+            });
+        });
+    }); */
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            userCoordinates = pos;
+
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                position: pos,
+                map: map,
+                gmpDraggable: true
+            });
+			
+			marker.addListener('dragend', function(event) {
+                userCoordinates = {
+                    lat: event.latLng.lat(),
+                    lng: event.latLng.lng()
+                };
+            });
+
+            map.setCenter(pos);
+			map.setZoom(16);
+        }, () => {
+            handleLocationError(true, map.getCenter());
+        },
+		{maximumAge:2000, enableHighAccuracy: true});
+    } else {
+        handleLocationError(false, map.getCenter());
+    }
+
+    map.addListener('click', (event) => {
+        placeMarker(event.latLng);
+    });
+	
+	map.data.addListener('click', function(event) {
+	  placeMarker(event.latLng)
+	});
+
+    locationButton.addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                userCoordinates = pos;
+                placeMarker(new google.maps.LatLng(pos.lat, pos.lng));
+                map.setCenter(pos);
+				map.setZoom(16);
+            });
+        }
+    });
+
+    document.getElementById('submit-button').addEventListener('click', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        //updateCoordinates(id, userCoordinates);
+		checkMarkerInPolygons(userCoordinates);
+    });
+}
+
+function placeMarker(location) {
+    if (marker) {
+        marker.position = location;
+    } else {
+        marker = new google.maps.marker.AdvancedMarkerElement({
+            position: location,
+            map: map,
+            gmpDraggable: true
+        });
+		
+		marker.addListener('dragend', function(event) {
+            userCoordinates = {
+                lat: event.latLng.lat(),
+                lng: event.latLng.lng()
+            };
+        });
+    }
+    userCoordinates = {
+        lat: location.lat(),
+        lng: location.lng()
+    };
+}
+
+function handleLocationError(browserHasGeolocation, pos) {
+    console.log(browserHasGeolocation
+        ? 'Error: The Geolocation service failed.'
+        : 'Error: Your browser doesn\'t support geolocation.');
+}
+
+function createLead(coordinates, location_id) {
+    
+	if(Object.keys(coordinates).length > 0){
+	
+		const urlParams = new URLSearchParams(window.location.search);
+        const category = urlParams.get('category');
+        const name = urlParams.get('name');
+        const companyName = urlParams.get('companyName');
+        const phone = urlParams.get('phone');
+		var data = {
+			gps: `${coordinates.lat},${coordinates.lng}`,
+				//'city': "Dubai",
+				'status': 'active',
+				'partner_id': 1,
+				'location_id': location_id,
+				'name': '',
+				  'phone': phone,
+				  'category': category,
+				  contactperson: '',
+				  additional_attributes: {
+					'company_name_1': '',
+					"client_type": category
+				}
+				  
+		};
+		
+		if (category === 'Person') {
+            data.name = name;
+			
+        } else if (category === 'Company') {
+            data.name = name;
+            //data.contactperson = name;
+			data.additional_attributes.company_name_1 = companyName;
+			
+        }
+		
+		
+	 
+		
+		var request = new XMLHttpRequest();
+
+	request.open('POST',  `https://crm.blink.jo/api/2.0/admin/crm/leads`);
+
+	request.setRequestHeader('Content-Type', 'application/json');
+	request.setRequestHeader('Authorization', 'Basic ODY3N2Q1N2EwMjI4NGYyMzc5OTVkMGQ1Nzg5NDcxOGQ6NGMyMmNlMzA1NDBiNDQ1YjZlNGQyMmJjYTg0ZjRjZjM=');
+
+	request.onreadystatechange = function () {
+	  if (this.readyState === 4) {
+		console.log('Status:', this.status);
+		console.log('Headers:', this.getAllResponseHeaders());
+		console.log('Body:', this.responseText);
+	  }
+	  if (this.status === 202 ) {
+            console.log('Thank you, location updated');
+        } else {
+            console.log('Error updating coordinates');
+        }
+	};
+
+	request.send(JSON.stringify(data)); 
+	
+	
+	var dataSms = {
+			'sender': "NeoByBlink",
+			'mobile': "+962" + "0795822348",
+			'content': `Dear ${name}`
+		};
+	
+	var requestSms = new XMLHttpRequest();
+
+	requestSms.open('POST',  `https://api.releans.com/v2/message`);
+
+	requestSms.setRequestHeader('Content-Type', 'application/json');
+	requestSms.setRequestHeader('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6ImQyMGEwM2IzLWZiNjQtNDU1Yi1iZTgxLTUzYmQzMDA4ZDgxYyIsImlhdCI6MTcxOTkwOTc2OCwiaXNzIjoxMTg1Nn0.1BcvknWBtSWABasGhEOIYeSVeCAdVb_d8nRPq5jF-m8');
+
+	requestSms.onreadystatechange = function () {
+	  if (this.readyState === 4) {
+		console.log('Status:', this.status);
+		console.log('Headers:', this.getAllResponseHeaders());
+		console.log('Body:', this.responseText);
+	  }
+	  if (this.status === 202 ) {
+            console.log('Thank you, SMS sent');
+        } else {
+            console.log('Error updating coordinates');
+        }
+	};
+
+	requestSms.send(JSON.stringify(dataSms)); 
+	
+	alert('Thank you, location updated');
+
+	
+	}else{
+	
+		console.log("Coordinates are not found")
+	}
+    
+}
+
+function checkMarkerInPolygons(coordinates) {
+            const latLng = new google.maps.LatLng(coordinates.lat, coordinates.lng);
+            let insidePolygon = false;
+            let polygonName = '';
+			
+			const urlParams = new URLSearchParams(window.location.search);
+			const category = urlParams.get('category');
+			
+
+            map.data.forEach(function (feature) {
+                const geometry = feature.getGeometry();
+                if (geometry.getType() === 'Polygon') {
+                    const paths = geometry.getArray()[0].getArray();
+                    const polygon = new google.maps.Polygon({ paths: paths });
+                    if (google.maps.geometry.poly.containsLocation(latLng, polygon)) {
+                        insidePolygon = true;
+                        polygonName = feature.getProperty('name');
+                    }
+                }
+            });
+			var locationId;
+            if (insidePolygon) {
+                if (polygonName === 'Microwave') {
+					locationId = 22;
+					createLead(coordinates, locationId );
+					if(category == "Person"){
+						window.location.href = 'https://www.blink.jo/mwvlead';
+					}else{
+						window.location.href = 'https://www.blink.jo/Bmwvlead';
+					}
+                    
+                } 
+				else if (polygonName === 'LLL Microwave') {
+					locationId = 23;
+					createLead(coordinates, locationId );
+					if(category == "Person"){
+						window.location.href = 'https://www.blink.jo/llllead';
+					}else{
+						window.location.href = 'https://www.blink.jo/Bllllead';
+					}
+                    
+                }else if (polygonName === 'Fiber') {
+					locationId = 1;
+					createLead(coordinates, locationId );
+					if(category == "Person"){
+						//window.location.href = 'https://www.blink.jo/fiberlead';
+					}else{
+						//window.location.href = 'https://www.blink.jo/Bfiberlead';
+					}
+                    
+                }
+				
+				
+            } else {
+				createLead(coordinates, 20 );
+				if(category == "Person"){
+					window.location.href = 'https://www.blink.jo/notcovered';
+				}else{
+					window.location.href = 'https://www.blink.jo/Bnotcovered';
+				}
+                
+            }
+        }
+
+
+initMap();
+
+	
+	</script>
+</body>
+</html>
