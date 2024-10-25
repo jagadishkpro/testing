@@ -37,13 +37,12 @@
       }
 	  
 	  
-	  /* Expanded overlay div at the center */
     #info-overlay {
       position: absolute;
-      top: 45%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 400px;
+      width: 450px;
       height: 200px;
       display: flex;
       background-color: #000;
@@ -51,30 +50,26 @@
       border-radius: 8px;
       transition: all 0.5s ease;
       z-index: 10;
-      overflow: hidden; /* Hide overflow to prevent overflow issues */
+      overflow: hidden; 
     }
 	
-	/* Animation when hiding (sliding left and fading out) */
     #info-overlay.slide-out {
       transform: translate(-150%, -50%);
       opacity: 0;
     }
 
-    /* Animation when showing (sliding to the center and fading in) */
     #info-overlay.slide-in {
       transform: translate(-50%, -50%);
       opacity: 1;
     }
 
-    /* Image container on the left */
     .left-container {
       flex: 1;
-      background: url('https://via.placeholder.com/150') no-repeat center center;
+     /* background: url('https://via.placeholder.com/150') no-repeat center center; */
       background-size: cover;
       border-radius: 8px 0 0 8px;
     }
 
-    /* Scrollable list container on the right */
     .right-container {
       flex: 1;
      /* padding: 20px; */
@@ -102,6 +97,7 @@
 	 color: #fff;
       border-radius: 5px;
 	  text-decoration: underline;
+	  font-size: 14px;
     }
 
     .right-container ul li:hover {
@@ -125,14 +121,14 @@
     z-index: 15;
     }
 
-    /* Collapsed small div to the far left */
+    
     #collapsed-overlay {
       position: absolute;
       top: 50%;
       left: 0;
       transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
+      width: 75px;
+      height: 60px;
       background-color: rgba(255, 255, 255, 0.9);
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
       border-radius: 8px;
@@ -151,7 +147,6 @@
       height: 100%;
     }
 
-    /* When collapsed overlay is visible (fades in) */
     #collapsed-overlay.show {
       display: block;
       opacity: 1;
@@ -180,10 +175,18 @@
 		#info-overlay {
 		  
 		  width: 325px;
-		 
+		  
 		}
 		#close-btn{
 			right: 0px;
+		}
+		
+		#collapsed-overlay {
+      
+		  width: 50px;
+		  height: 50px;
+		  
+
 		}
 		
       }
@@ -200,7 +203,7 @@
   <div class="left-container"><img style="width: 100%;height: 100%;" src="https://jagadishkpro.github.io/testing/JeffHeadshotPro.png" alt="large image"></div>
   <div class="right-container">
     <button id="close-btn">X</button>
-    <p style="color:#fff;padding: 10px;">Welcome to my project portfolio. Click on any pin for more information. Or, scroll down for my project list.<br>-Jeff Vanden Eerenbeemt <br><br>Projects (most recent)</p>
+    <p style="color:#fff;padding: 10px;margin-top: 0px;">Welcome to my project portfolio. Click on any pin for more information. Or, scroll down for my project list.<br>-Jeff Vanden Eerenbeemt <br><br>Projects (most recent listed first)</p>
     <ul id="marker-list"></ul> 
   </div>
 </div>
@@ -695,7 +698,7 @@ infowindow = new google.maps.InfoWindow({
 				
 				infowindow.setContent(content);
               
-				map.setZoom(17);
+				map.setZoom(11);
 				map.panTo(markerObj.getPosition());
               
 				map.panBy(0, -225);
@@ -718,7 +721,7 @@ infowindow = new google.maps.InfoWindow({
 
 				  content += `</div>`;
 				infowindow.setContent(content);
-				map.setZoom(17);
+				map.setZoom(11);
 				map.panTo(markerObj.getPosition());
 					
 			}
@@ -787,7 +790,7 @@ infowindow = new google.maps.InfoWindow({
 		setTimeout(function() {
 		  infoOverlay.style.display = 'none';  
 		  collapsedOverlay.classList.add('show');  
-		}, 500); 
+		}, 200); 
 	  }
 
 	  
