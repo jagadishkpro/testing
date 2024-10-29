@@ -42,8 +42,10 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 450px;
-      height: 200px;
+     /* width: 450px;
+      height: 200px; */
+	  width: 700px;
+		height: 300px;
       display: flex;
       background-color: #000;
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
@@ -84,8 +86,9 @@
     }
 	
 	.right-container p {
-			margin-top: 0;
+			margin-top: 10px;
 			font-size:16px;
+			margin-bottom: -15px;
 		}
 
     .right-container ul {
@@ -102,7 +105,7 @@
 	 color: #fff;
       border-radius: 5px;
 	  text-decoration: underline;
-	  font-size: 14px;
+	  font-size: 16px;
     }
 
     .right-container ul li:hover {
@@ -114,7 +117,8 @@
     /* top: 5px; */
     right: 5px;
     cursor: pointer;
-    font-size: 12px;
+	/* font-size: 12px; */
+    font-size: 16px;
     background-color: #000;
     color: white;
     border: none;
@@ -179,11 +183,17 @@
 		
 		#info-overlay {
 		  
-		  width: 325px;
+		 /* width: 325px;
+		  height: 160px; 
+		  width: 375px;
+        height: 175px;  */
+		        width: 80%;
+        height: 20%;
 		  
 		}
 		#close-btn{
 			right: 0px;
+			font-size: 14px;
 		}
 		
 		#collapsed-overlay {
@@ -195,8 +205,12 @@
 		}
 		
 		.right-container p {
+			margin-top: 10px;
+			font-size: 12px;
+		}
 		
-			font-size: 14px;
+		.right-container ul li{
+			font-size: 12px;
 		}
 		
 		
@@ -650,10 +664,31 @@ infowindow = new google.maps.InfoWindow({
 				
 				infowindow.setContent(content);
               
+				let tempDiv = document.createElement('div');
+				tempDiv.style.position = 'absolute';
+				tempDiv.style.visibility = 'hidden';
+				tempDiv.style.maxHeight = '300px'; 
+				tempDiv.innerHTML = content;
+				document.body.appendChild(tempDiv);
+
+				
+				let contentHeight = tempDiv.getBoundingClientRect().height;
+				document.body.removeChild(tempDiv);
+
+				
+				let offset;
+				if (contentHeight >= 275) {
+				  offset = -225; 
+				} else {
+				  
+				  offset = -225 * (contentHeight / 300); 
+				}
+              
 				
 				map.panTo(marker.getPosition());
               
-				map.panBy(0, -225);
+				//map.panBy(0, -225);
+				map.panBy(0, offset);
             }else{
 				 let content = `<b style="font-size: 16px;">${location['name']}</b></br></br><div class="infowindow-content">`;
 
@@ -708,11 +743,32 @@ infowindow = new google.maps.InfoWindow({
 				  content += `</div>`;
 				
 				infowindow.setContent(content);
+				
+				let tempDiv = document.createElement('div');
+				tempDiv.style.position = 'absolute';
+				tempDiv.style.visibility = 'hidden';
+				tempDiv.style.maxHeight = '300px'; 
+				tempDiv.innerHTML = content;
+				document.body.appendChild(tempDiv);
+
+				
+				let contentHeight = tempDiv.getBoundingClientRect().height;
+				document.body.removeChild(tempDiv);
+
+				
+				let offset;
+				if (contentHeight >= 275) {
+				  offset = -225; 
+				} else {
+				  
+				  offset = -225 * (contentHeight / 300); 
+				}
               
 				map.setZoom(11);
 				map.panTo(markerObj.getPosition());
               
-				map.panBy(0, -225);
+				//map.panBy(0, -225);
+				map.panBy(0, offset);
             }else{
 				 let content = `<b style="font-size: 16px;">${location['name']}</b></br></br><div class="infowindow-content">`;
 
@@ -811,6 +867,7 @@ infowindow = new google.maps.InfoWindow({
 	  collapsedOverlay.addEventListener('click', function() {
 		collapsedOverlay.classList.remove('show');  
 		infoOverlay.style.display = 'flex';  
+		infowindow.close();
 		setTimeout(function() {
 		  infoOverlay.classList.remove('slide-out');
 		  infoOverlay.classList.add('slide-in');  
