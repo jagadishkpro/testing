@@ -1,0 +1,284 @@
+<html>
+  <head>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<style>
+    #map {
+      height: 100%;
+    }
+    
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    
+	 #legend {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            max-height: 300px; 
+            overflow-y: auto;
+			scrollbar-width: thin; 
+            scrollbar-color: #cccccc #f0f0f0;
+        }
+
+		.legend-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .legend-text {
+            font-size: 12px; 
+        }
+     #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+		
+		#search-input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    
+  </style>
+  
+		 <div id="search-container">
+        <input id="search-input" type="search" placeholder="Search for a location">
+    </div>
+		<div id="map"></div>
+		<div id="legend"></div>
+<div id="loading">
+        <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading..." />
+    </div>
+	
+	<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <script>
+var map;
+var infowindow;
+
+async function fetchAuthKey(url, postData) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(postData)
+        });
+        const data = await response.json();
+        return data.authKey; 
+    } catch (error) {
+        console.error("Error fetching auth key:", error);
+        throw error;
+    }
+}
+
+async function fetchTechnicianData(url, authKey) {
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Authorization': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjYwNkZEM0Y3NzgxNzM4N0U3NjVDRTY5NkUxNzU0RTM3ODNBODU3MkJSUzI1NiIsIng1dCI6IllHX1Q5M2dYT0g1MlhPYVc0WFZPTjRPb1Z5cyIsInR5cCI6ImF0K2p3dCJ9.eyJpc3MiOiJodHRwczovL2F1dGguc2VydmljZXRpdGFuLmlvIiwibmJmIjoxNzM2NDM2MjEzLCJpYXQiOjE3MzY0MzYyMTMsImV4cCI6MTczNjQzNzExMywic2NvcGUiOlsidG4uZGlzLmFwcG9pbnRtZW50YXNzaWdubWVudHM6ciIsInRuLmRpcy5hcnJpdmFsd2luZG93czpyIiwidG4uZGlzLmJ1c2luZXNzaG91cnM6ciIsInRuLmRpcy5jYXBhY2l0eTpyIiwidG4uZGlzLmdwc3BpbmdzOnIiLCJ0bi5kaXMubm9uam9iYXBwb2ludG1lbnRzOnIiLCJ0bi5kaXMudGVhbXM6ciIsInRuLmRpcy50ZWNobmljaWFuc2hpZnRzOnIiLCJ0bi5kaXMuem9uZXM6ciJdLCJjbGllbnRfaWQiOiJjaWQuOWZraWF3OTh3anQ1MjBlajV5dncyYm16ZCIsImFwaWFwcF9pZCI6IjE2YWVwa3QyOHA0d2siLCJleHRfZGF0YV9ndWlkIjoiOTFlYjE4MzQtOGY2NC00M2U1LTgxMzctYWRlMTljNDBkMWMyIiwiZ3BzX3Byb3ZpZGVyIjoiTmF0aXZlIiwib3duZXJfaWQiOiJ0ZW5hbnQtMTcyMTM0NjQ1My1lbnYtcHJvZCIsInNjb3Blc192ZXJzaW9uIjoiMSIsInRlbmFudCI6IjE3MjEzNDY0NTMiLCJqdGkiOiI4MTAzNThENDRFOUZBODgzODNENThCODNGRTU0RUE3QiJ9.b100wDt8cu-lsVkUBys3FLz3n-heewq7g8Qwl_cJQRWcFrWROsKGAedblWazox4oBEw9NgHcUtTB7iOc5zMuJxq-McaoqNZZHlBVzTCz8U-wJqwlhl60WoFIYSRRH-zdk0q0xTg6Wtim8u8XptqZ_kXqYEVaUbTR50fOeQU2HpUYedqJHc4BaZ6Boppev25HjUshV1U2RBg-1-iB7oh-9HtW84gQZgisRdkErQkRbldzU7DgBHxh29K3JM1P0AgtXJJiOZtkftxu-pajrhvxTz97ToA6I5Jn4lR_CD5aCRuDf_x1nbEH__rmnvzh8Gy-V1nbG1zPdR88gF7KL-1qJA',
+'st-app-key': 'ak1.z3ezzg1m7ucb3gn7koawlue8i'}
+        });
+        const data = await response.json();
+        return data; 
+    } catch (error) {
+        console.error("Error fetching technician data:", error);
+        throw error;
+    }
+}
+
+async function fetchColorData(url) {
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data; 
+    } catch (error) {
+        console.error("Error fetching color data:", error);
+        throw error;
+    }
+}
+
+function initMap(){
+	document.getElementById('loading').style.display = 'block';
+		map = new google.maps.Map(document.getElementById("map"), {
+			zoom: 4,
+			center: { lat: 39.80549692336535, lng: -100.82492787547338 },
+			fullscreenControl: false,
+			mapTypeControl: true,
+			zoomControlOptions: {
+                    position: google.maps.ControlPosition.LEFT_BOTTOM
+                },
+				mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.LEFT_TOP, 
+                    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR 
+                },
+				
+                
+				
+			
+		  });
+	infowindow = new google.maps.InfoWindow();
+	var marker = new google.maps.Marker({
+                map: map,
+                anchorPoint: new google.maps.Point(0, -29) // Position the marker icon at the bottom center of the marker
+            });
+	var searchInput = document.getElementById('search-input');
+	 map.controls[google.maps.ControlPosition.TOP_CENTER].push(searchInput);
+            var autocomplete = new google.maps.places.Autocomplete(searchInput, {
+                types: ['(regions)'],
+                componentRestrictions: { country: 'us' }
+            });
+
+            autocomplete.bindTo('bounds', map);
+
+            autocomplete.addListener('place_changed', function() {
+			marker.setVisible(false);
+                var place = autocomplete.getPlace();
+                if (!place.geometry) {
+                    window.alert("No details available for input: '" + place.name + "'");
+                    return;
+                }
+
+                if (place.geometry.viewport) {
+                    map.fitBounds(place.geometry.viewport);
+                } else {
+                    map.setCenter(place.geometry.location);
+                    map.setZoom(17);  // Set the zoom level to 17 if the place has no viewport defined
+                }
+				marker.setPosition(place.geometry.location);
+                marker.setVisible(true);
+            });
+			
+			loadMapData();
+	
+	
+	}
+
+async function loadMapData() {
+    
+
+    try {
+        
+        const authUrl = 'https://auth.servicetitan.io/connect/token';
+const technicianUrl = 'https://api.servicetitan.io/dispatch/v2/tenant/1721346453/zones?page=1&pageSize=300&includeTotal=true';
+const colorDataUrl = 'colorcodes.json';
+const postData = { Grant_Type: 'client_credentials' ,client_id:'cid.9fkiaw98wjt520ej5yvw2bmzd', client_secret: 'cs1.vb2ryhejldmqbutixjbimvtac09iq0okggm076e2wpli8p87n8' };
+
+        //const authKey = await fetchAuthKey(authUrl, postData);
+        const technicianData = await fetchTechnicianData(technicianUrl, '');
+        const colorData = await fetchColorData(colorDataUrl);
+
+        processAndShowZipCodes(technicianData, colorData);
+
+    } catch (error) {
+        console.error("Error loading map data:", error);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+function processAndShowZipCodes(technicianData, colorData) {
+    map.data.loadGeoJson("https://raw.githubusercontent.com/ndrezn/zip-code-geojson/main/usa_zip_codes_geo_100m.json"); 
+
+    google.maps.event.addListenerOnce(map.data, 'addfeature', function () {
+        document.getElementById('loading').style.display = 'none';
+    });
+
+    map.data.setStyle(function (feature) {
+        const zipCode = feature.getProperty('ZCTA5CE10');
+        const technicianInfo = technicianData.find(item => item.zipCode === zipCode);
+
+        if (technicianInfo) {
+            const techColor = colorData[technicianInfo.technicianName];
+            return {
+                fillColor: techColor,
+                strokeWeight: 0.1,
+                fillOpacity: 0.5,
+            };
+        }
+        return { visible: false };
+    });
+
+    createLegend(technicianData, colorData);
+
+    map.data.addListener('click', function (event) {
+        const zipCode = event.feature.getProperty('ZCTA5CE10');
+        const technicianInfo = technicianData.find(item => item.zipCode === zipCode);
+
+        if (technicianInfo) {
+            const contentString = `<div>
+                <p><b>${zipCode}</b></p>
+                <p>Tech: ${technicianInfo.technicianName}</p>
+            </div>`;
+            infowindow.setContent(contentString);
+            infowindow.setPosition(event.latLng);
+            infowindow.open(map);
+        }
+    });
+}
+
+function createLegend(technicianData, colorData) {
+    const legendDiv = document.getElementById('legend');
+    legendDiv.innerHTML = '';
+
+    const uniqueTechnicians = [...new Set(technicianData.map(item => item.technicianName))];
+
+    uniqueTechnicians.forEach(technician => {
+        const color = colorData[technician];
+        if (color) {
+            const legendItem = document.createElement('div');
+            legendItem.classList.add('legend-item');
+            const colorCircle = document.createElement('div');
+            colorCircle.classList.add('legend-color');
+            colorCircle.style.backgroundColor = color;
+            const legendText = document.createElement('span');
+            legendText.classList.add('legend-text');
+            legendText.textContent = technician;
+            legendItem.appendChild(colorCircle);
+            legendItem.appendChild(legendText);
+            legendDiv.appendChild(legendItem);
+        }
+    });
+}
+
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBHyEf3dH5YF22X3qvkZ0Jumvu8WuiS5pA&libraries=places&callback=initMap"></script>
+
+	
+	
+    
+    
+  </body>
+</html>
